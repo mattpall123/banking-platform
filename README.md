@@ -16,7 +16,7 @@ A simulated banking management system built to demonstrate the engineering patte
 🚧 **In active development.** Building session-by-session.
 
 - [x] Session 1 — Project scaffold, Postgres in Docker, Flyway, Actuator health
-- [ ] Session 2 — Domain models (Customer, User, Account)
+- [x] Session 2 — Domain models (Customer, UserAccount, Account, AccountHolder, FINTRAC-aligned KYC fields)
 - [ ] Session 3 — JWT authentication, BCrypt
 - [ ] Session 4 — Double-entry ledger
 - [ ] Session 5 — Transfer service with pessimistic locking + idempotency keys
