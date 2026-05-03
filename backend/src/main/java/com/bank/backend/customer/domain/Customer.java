@@ -2,7 +2,6 @@ package com.bank.backend.customer.domain;
 
 import com.bank.backend.shared.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +20,7 @@ import java.time.LocalDate;
 @Table(name = "customers")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)  // JPA needs no-args; protected keeps it out of normal use
+@NoArgsConstructor
 public class Customer extends BaseEntity {
 
     @Id

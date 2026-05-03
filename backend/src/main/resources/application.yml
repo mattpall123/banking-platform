@@ -7,18 +7,23 @@ spring:
     password: bankpass
     driver-class-name: org.postgresql.Driver
   jpa:
+  open-in-view: false
+  hibernate:
+    ddl-auto: validate
+  show-sql: false
+  properties:
     hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          time_zone: UTC
+      format_sql: true
+      jdbc:
+        time_zone: UTC
   flyway:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
+  security:
+      user:
+        name: disabled
+        password: disabled-not-used-jwt-only
 
 server:
   port: 8080
@@ -36,3 +41,11 @@ logging:
   level:
     org.springframework.security: INFO
     org.hibernate.SQL: INFO
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:LssbwaShINOR1UXKUf6PTE7mXMjv65BllAsYJ2FSasYjxMffoUbon7w2Gh4hNXDflX+QZFPA6RtYqOwlIeTZYw==}
+      access-token-ttl-seconds: 900       
+      refresh-token-ttl-seconds: 604800   
+      issuer: banking-platform

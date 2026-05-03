@@ -2,7 +2,6 @@ package com.bank.backend.account.domain;
 
 import com.bank.backend.customer.domain.Customer;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,7 +23,7 @@ import java.time.Instant;
 @Table(name = "account_holders")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class AccountHolder {
 
     @Id

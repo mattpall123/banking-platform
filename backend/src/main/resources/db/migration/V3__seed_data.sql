@@ -12,9 +12,10 @@
 -- ============================================================================
 
 -- Users
+-- Both passwords are 'Password123!' — BCrypt work factor 12.
 INSERT INTO users (id, email, password_hash) VALUES
-    (1, 'alice@example.com', '$2a$12$placeholder.invalid.hash.do.not.use.session3.will.replace'),
-    (2, 'bob@example.com',   '$2a$12$placeholder.invalid.hash.do.not.use.session3.will.replace');
+    (1, 'alice@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyZkb6sMFGmYWy'),
+    (2, 'bob@example.com',   '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyZkb6sMFGmYWy');
 
 -- Push the sequence past our hardcoded IDs so future inserts work
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
