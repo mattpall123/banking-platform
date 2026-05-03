@@ -1,4 +1,4 @@
-package com.bank.backend.customer;
+package com.bank.backend.customer.repository;
 
 import com.bank.backend.customer.domain.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
