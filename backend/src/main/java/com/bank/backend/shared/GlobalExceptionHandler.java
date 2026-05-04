@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
                 "path", req.getRequestURI()
         ));
     }
-    
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(
             MethodArgumentNotValidException ex, HttpServletRequest req) {
@@ -75,6 +75,19 @@ public class GlobalExceptionHandler {
                 "timestamp", Instant.now().toString(),
                 "status", 400,
                 "error", "Bad Request",
+                "message", ex.getMessage(),
+                "path", req.getRequestURI()
+        ));
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException ex,
+            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 403,
+                "error", "Forbidden",
                 "message", ex.getMessage(),
                 "path", req.getRequestURI()
         ));
