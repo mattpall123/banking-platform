@@ -18,7 +18,7 @@ A simulated banking management system built to demonstrate the engineering patte
 - [x] Session 1 — Project scaffold, Postgres in Docker, Flyway, Actuator health
 - [x] Session 2 — Domain models (Customer, UserAccount, Account, AccountHolder, FINTRAC-aligned KYC fields)
 - [x] Session 3 — JWT auth (BCrypt, lockout, refresh rotation, theft detection, IDOR-safe /me)
-- [ ] Session 4 — Double-entry ledger
+- [x] Session 4 — Double-entry ledger (Money value object, balanced journal entries, idempotency keys, IDOR protection)
 - [ ] Session 5 — Transfer service with pessimistic locking + idempotency keys
 - [ ] Session 6 — Transaction history, dashboard UI
 - [ ] Session 7 — Audit log, fraud rules, observability
