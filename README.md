@@ -19,7 +19,7 @@ A simulated banking management system built to demonstrate the engineering patte
 - [x] Session 2 — Domain models (Customer, UserAccount, Account, AccountHolder, FINTRAC-aligned KYC fields)
 - [x] Session 3 — JWT auth (BCrypt, lockout, refresh rotation, theft detection, IDOR-safe /me)
 - [x] Session 4 — Double-entry ledger (Money value object, balanced journal entries, idempotency keys, IDOR protection)
-- [ ] Session 5 — Transfer service with pessimistic locking + idempotency keys
+- [x] Session 5 — Transfers + concurrency (pessimistic locking, deterministic ID ordering, /api/transactions/me, 100-concurrent load test verified)
 - [ ] Session 6 — Transaction history, dashboard UI
 - [ ] Session 7 — Audit log, fraud rules, observability
 - [ ] Session 8 — Spring Batch interest accrual, PDF statements
