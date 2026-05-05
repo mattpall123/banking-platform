@@ -25,4 +25,16 @@ public interface PostingRepository extends JpaRepository<Posting, Long> {
          WHERE p.ledgerAccountId = :ledgerAccountId
     """)
     BigDecimal sumByLedgerAccountId(@Param("ledgerAccountId") Long ledgerAccountId);
+    /**
+     * Every posting against a ledger account, joined with its journal entry,
+     * newest first. Used for transaction history.
+     */
+    @Query("""
+        SELECT p, je
+          FROM Posting p
+          JOIN JournalEntry je ON je.id = p.journalEntryId
+         WHERE p.ledgerAccountId = :ledgerAccountId
+         ORDER BY je.occurredAt DESC, p.id DESC
+    """)
+    List<Object[]> findHistoryForLedgerAccount(@Param("ledgerAccountId") Long ledgerAccountId);
 }

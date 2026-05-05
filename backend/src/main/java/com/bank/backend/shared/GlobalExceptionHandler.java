@@ -92,6 +92,19 @@ public class GlobalExceptionHandler {
                 "path", req.getRequestURI()
         ));
     }
+    
+    @ExceptionHandler(com.bank.backend.account.service.InsufficientFundsException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientFunds(
+            com.bank.backend.account.service.InsufficientFundsException ex,
+            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 422,
+                "error", "Unprocessable Entity",
+                "message", ex.getMessage(),
+                "path", req.getRequestURI()
+        ));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(
