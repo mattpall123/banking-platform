@@ -19,6 +19,9 @@ public class AuthController {
 
     private final AuthService authService;
 
+    public record MeResponse(Long userId, String email, java.util.List<String> roles) {}
+
+
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
@@ -46,6 +49,11 @@ public class AuthController {
             HttpServletRequest request
     ) {
         return ResponseEntity.ok(authService.refresh(body.refreshToken(), clientIp(request)));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MeResponse> me(@AuthenticationPrincipal CurrentUser user) {
+        return ResponseEntity.ok(new MeResponse(user.userId(), user.email(), user.roles()));
     }
 
     @PostMapping("/logout")
