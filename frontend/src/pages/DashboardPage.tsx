@@ -11,6 +11,7 @@ import { TransferForm } from "@/components/TransferForm";
 import { TransactionList } from "@/components/TransactionList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnvBanner } from "@/components/EnvBanner";
+import { StatementList } from "@/components/StatementList";
 
 interface DialogState {
   account: AccountResponse;
@@ -122,7 +123,25 @@ export function DashboardPage() {
             </Card>
           </section>
         )}
+        {/* Statements */}
+        {accountsQuery.data && accountsQuery.data.length > 0 && (
+          <section>
+            <h2 className="text-lg font-medium mb-4">Statements</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Monthly statements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StatementList />
+              </CardContent>
+            </Card>
+          </section>
+       )}
       </main>
+
+      
 
       {dialog && (
         <MoneyActionDialog

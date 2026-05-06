@@ -38,14 +38,14 @@ export function EnvBanner() {
             Backend: {healthQuery.isLoading ? "checking…" : status ?? "unreachable"}
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          <span>v{version}</span>
+       <div className="flex items-center gap-4">
+          <span>v{version}</span><a
           
             href="http://localhost:8080/actuator/prometheus"
             target="_blank"
             rel="noreferrer"
             className="hover:underline"
-          <a>
+          >
             metrics
           </a>
         </div>

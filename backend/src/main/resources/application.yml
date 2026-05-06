@@ -7,15 +7,15 @@ spring:
     password: bankpass
     driver-class-name: org.postgresql.Driver
   jpa:
-  open-in-view: false
-  hibernate:
-    ddl-auto: validate
-  show-sql: false
-  properties:
+    open-in-view: false
     hibernate:
-      format_sql: true
-      jdbc:
-        time_zone: UTC
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -24,6 +24,11 @@ spring:
       user:
         name: disabled
         password: disabled-not-used-jwt-only
+  batch:
+      job:
+        enabled: false        # don't auto-run jobs at startup
+      jdbc:
+        initialize-schema: never   # we manage schema via Flyway
 
 server:
   port: 8080
@@ -32,10 +37,26 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health, info, metrics, prometheus
   endpoint:
     health:
       show-details: when-authorized
+    prometheus:
+      access: read_only
+  info:
+    git:
+      mode: full
+    env:
+      enabled: true
+  metrics:
+    tags:
+      application: banking-platform
+
+info:
+  app:
+    name: Banking Platform
+    description: Spring Boot + React simulated bank
+    version: 0.7.0
 
 logging:
   level:
@@ -49,3 +70,11 @@ app:
       access-token-ttl-seconds: 900       
       refresh-token-ttl-seconds: 604800   
       issuer: banking-platform
+
+bank:
+  statements:
+    dir: statements
+  batch:
+    statements:
+      enabled: false                        # disabled by default in dev
+      cron: "0 0 2 1 * *"                  # 02:00 on the 1st, monthly

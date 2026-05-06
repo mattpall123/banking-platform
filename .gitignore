@@ -37,3 +37,9 @@ build/
 
 # Docker
 docker-compose.override.yml
+
+# Application logs
+backend/logs/
+
+# Generated statement PDFs
+backend/statements/
