@@ -76,7 +76,7 @@ public class SecurityConfig {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(List.of("http://localhost:5173"));  // Vite dev server
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         cfg.setExposedHeaders(List.of("Authorization"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);

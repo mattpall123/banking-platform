@@ -1,27 +1,100 @@
 // src/pages/DashboardPage.tsx
-// Placeholder for now — full version in Part 3.
 
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { accountsApi, type AccountResponse } from "@/api/accounts";
 import { useAuth } from "@/auth/useAuth";
+import { Button } from "@/components/ui/button";
+import { AccountCard } from "@/components/AccountCard";
+import { MoneyActionDialog } from "@/components/MoneyActionDialog";
+import { TransferForm } from "@/components/TransferForm";
+
+interface DialogState {
+  account: AccountResponse;
+  kind: "deposit" | "withdraw";
+}
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const [dialog, setDialog] = useState<DialogState | null>(null);
+
+  const accountsQuery = useQuery({
+    queryKey: ["accounts"],
+    queryFn: () => accountsApi.listMine(),
+  });
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8">
-      <header className="flex justify-between items-center max-w-4xl mx-auto mb-8">
-        <h1 className="text-2xl font-bold">Banking Platform</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user?.email}</span>
-          <Button variant="outline" onClick={logout}>Log out</Button>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-semibold">Banking Platform</h1>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <Button variant="outline" size="sm" onClick={logout}>Log out</Button>
+          </div>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto">
-        <p className="text-muted-foreground">
-          Logged in as user #{user?.userId} with roles: {user?.roles.join(", ")}.
-          Account list, transfers, and history come in Part 3.
-        </p>
+
+      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        <section>
+          <h2 className="text-lg font-medium mb-4">Your accounts</h2>
+
+          {accountsQuery.isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-40 rounded-lg border bg-muted/30 animate-pulse" />
+              <div className="h-40 rounded-lg border bg-muted/30 animate-pulse" />
+            </div>
+          )}
+
+          {accountsQuery.isError && (
+            <p className="text-sm text-destructive">
+              Couldn't load your accounts. Please refresh the page.
+            </p>
+          )}
+
+          {accountsQuery.data && accountsQuery.data.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              You don't have any accounts yet.
+            </p>
+          )}
+
+          {accountsQuery.data && accountsQuery.data.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {accountsQuery.data.map((acc) => (
+                <AccountCard
+                  key={acc.id}
+                  account={acc}
+                  onDeposit={() => setDialog({ account: acc, kind: "deposit" })}
+                  onWithdraw={() => setDialog({ account: acc, kind: "withdraw" })}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {accountsQuery.data && accountsQuery.data.length > 0 && (
+          <section>
+            <h2 className="text-lg font-medium mb-4">Transfer</h2>
+            <TransferForm accounts={accountsQuery.data} />
+          </section>
+        )}
+
+        <section>
+          <h2 className="text-lg font-medium mb-4">Recent transactions</h2>
+          <p className="text-sm text-muted-foreground">
+            Transaction list comes in Part 5.
+          </p>
+        </section>
       </main>
+
+      {dialog && (
+        <MoneyActionDialog
+          account={dialog.account}
+          kind={dialog.kind}
+          open={true}
+          onOpenChange={(open) => { if (!open) setDialog(null); }}
+        />
+      )}
     </div>
   );
 }

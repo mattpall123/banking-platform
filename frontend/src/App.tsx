@@ -7,11 +7,12 @@ import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { Toaster } from "@/components/ui/sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: false,                  // don't auto-retry; surfaces errors faster in dev
+      retry: false,
       refetchOnWindowFocus: false,
     },
   },
@@ -35,6 +36,7 @@ function App() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <Toaster richColors position="top-right" />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
