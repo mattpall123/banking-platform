@@ -22,7 +22,7 @@ A simulated banking management system built to demonstrate the engineering patte
 - [x] Session 5 — Transfers + concurrency (pessimistic locking, deterministic ID ordering, /api/transactions/me, 100-concurrent load test verified)
 - [x] Session 6 — Transaction history, dashboard UI
 - [x] Session 7 — Audit log + observability (hash-chained audit, /actuator/prometheus, structured JSON logs, ADR-001)
-- [ ] Session 8 — Spring Batch interest accrual, PDF statements
+- [x] Session 8 — Spring Batch + statements (monthly batch job, OpenPDF, hash-resilient retry, customer download, scheduled cron behind feature flag, synthetic data seeder)
 - [ ] Session 9 — Role-based access control, scheduled transfers
 - [ ] Session 10 — Interac e-Transfer simulation
 - [ ] Session 11 — CI/CD, deploy live
