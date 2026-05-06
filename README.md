@@ -21,7 +21,7 @@ A simulated banking management system built to demonstrate the engineering patte
 - [x] Session 4 — Double-entry ledger (Money value object, balanced journal entries, idempotency keys, IDOR protection)
 - [x] Session 5 — Transfers + concurrency (pessimistic locking, deterministic ID ordering, /api/transactions/me, 100-concurrent load test verified)
 - [x] Session 6 — Transaction history, dashboard UI
-- [ ] Session 7 — Audit log, fraud rules, observability
+- [x] Session 7 — Audit log + observability (hash-chained audit, /actuator/prometheus, structured JSON logs, ADR-001)
 - [ ] Session 8 — Spring Batch interest accrual, PDF statements
 - [ ] Session 9 — Role-based access control, scheduled transfers
 - [ ] Session 10 — Interac e-Transfer simulation
