@@ -10,6 +10,7 @@ import { MoneyActionDialog } from "@/components/MoneyActionDialog";
 import { TransferForm } from "@/components/TransferForm";
 import { TransactionList } from "@/components/TransactionList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EnvBanner } from "@/components/EnvBanner";
 
 interface DialogState {
   account: AccountResponse;
@@ -19,12 +20,13 @@ interface DialogState {
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const [historyAccountId, setHistoryAccountId] = useState<number | null>(null);
-
+  const [historyAccountIdRaw, setHistoryAccountId] = useState<number | null>(null);
   const accountsQuery = useQuery({
     queryKey: ["accounts"],
     queryFn: () => accountsApi.listMine(),
   });
+   const historyAccountId =
+    historyAccountIdRaw ?? accountsQuery.data?.[0]?.id ?? null;
 
   // Default the history dropdown to the first account once loaded.
   useEffect(() => {
@@ -130,6 +132,7 @@ export function DashboardPage() {
           onOpenChange={(open) => { if (!open) setDialog(null); }}
         />
       )}
+      <EnvBanner />
     </div>
   );
 }

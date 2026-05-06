@@ -19,7 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import com.bank.backend.audit.service.Audited;
+import static com.bank.backend.audit.domain.AuditAction.*;
 import java.util.List;
 
 @RestController
@@ -51,10 +52,9 @@ public class AccountController {
                 .orElseThrow(() -> new IllegalStateException(
                     "No customer record for authenticated user"));
 
-        List<AccountHolder> holdings = accountHolderRepo.findByCustomer(customer);
+        List<AccountHolder> holdings = accountHolderRepo.findActiveByCustomerWithAccount(customer);
 
         List<AccountResponse> response = holdings.stream()
-                .filter(h -> h.getRemovedAt() == null)
                 .map(AccountHolder::getAccount)
                 .map(account -> AccountResponse.of(
                         account,
@@ -66,6 +66,7 @@ public class AccountController {
     }
 
     @PostMapping("/{accountId}/deposit")
+    @Audited(action = ACCOUNT_DEPOSIT, resourceType = "Account")
     public ResponseEntity<JournalEntryResponse> deposit(
             @PathVariable Long accountId,
             @Valid @RequestBody MoneyRequest body,
@@ -82,6 +83,7 @@ public class AccountController {
     }
 
     @PostMapping("/{accountId}/withdraw")
+    @Audited(action = ACCOUNT_WITHDRAW, resourceType = "Account")
     public ResponseEntity<JournalEntryResponse> withdraw(
             @PathVariable Long accountId,
             @Valid @RequestBody MoneyRequest body,
