@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { accountsApi, type AccountResponse } from "@/api/accounts";
 import { useAuth } from "@/auth/useAuth";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { AccountCard } from "@/components/AccountCard";
 import { MoneyActionDialog } from "@/components/MoneyActionDialog";
 import { TransferForm } from "@/components/TransferForm";
+import { TransactionList } from "@/components/TransactionList";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DialogState {
   account: AccountResponse;
@@ -17,11 +19,19 @@ interface DialogState {
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [historyAccountId, setHistoryAccountId] = useState<number | null>(null);
 
   const accountsQuery = useQuery({
     queryKey: ["accounts"],
     queryFn: () => accountsApi.listMine(),
   });
+
+  // Default the history dropdown to the first account once loaded.
+  useEffect(() => {
+    if (historyAccountId === null && accountsQuery.data && accountsQuery.data.length > 0) {
+      setHistoryAccountId(accountsQuery.data[0].id);
+    }
+  }, [accountsQuery.data, historyAccountId]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -36,6 +46,7 @@ export function DashboardPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        {/* Accounts */}
         <section>
           <h2 className="text-lg font-medium mb-4">Your accounts</h2>
 
@@ -72,6 +83,7 @@ export function DashboardPage() {
           )}
         </section>
 
+        {/* Transfer */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
           <section>
             <h2 className="text-lg font-medium mb-4">Transfer</h2>
@@ -79,12 +91,35 @@ export function DashboardPage() {
           </section>
         )}
 
-        <section>
-          <h2 className="text-lg font-medium mb-4">Recent transactions</h2>
-          <p className="text-sm text-muted-foreground">
-            Transaction list comes in Part 5.
-          </p>
-        </section>
+        {/* Transaction history */}
+        {accountsQuery.data && accountsQuery.data.length > 0 && historyAccountId !== null && (
+          <section>
+            <h2 className="text-lg font-medium mb-4">Recent transactions</h2>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-medium">
+                    Transaction history
+                  </CardTitle>
+                  <select
+                    value={historyAccountId}
+                    onChange={(e) => setHistoryAccountId(Number(e.target.value))}
+                    className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    {accountsQuery.data.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.accountType} •••• {a.accountNumber.slice(-4)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <TransactionList accountId={historyAccountId} />
+              </CardContent>
+            </Card>
+          </section>
+        )}
       </main>
 
       {dialog && (

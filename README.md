@@ -28,20 +28,46 @@ A simulated banking management system built to demonstrate the engineering patte
 - [ ] Session 11 — CI/CD, deploy live
 - [ ] Session 12 — Polish, architecture diagrams, demo seed data
 
-## Run locally
+## Screenshots
+
+### Dashboard
+
+A logged-in customer's view: account cards with masked numbers and live balances,
+transfer form, and full transaction history derived from the underlying double-entry ledger.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Login
+
+JWT-based authentication with refresh-token rotation and lockout protection.
+
+![Login](docs/screenshots/login.png)
+
+### Register
+
+Full FINTRAC-aligned KYC fields (legal name, DOB, address, ID type, occupation, PEP flag).
+
+![Register](docs/screenshots/register.png)
+
+## Run it locally
+
+You'll need: Java 21, Maven, Docker, Node 20+.
 
 ```bash
-# Start Postgres
+# 1. Start Postgres
 docker compose up -d
 
-# Run the backend
+# 2. Backend (in one terminal)
 cd backend
 mvn spring-boot:run
 
-# Verify
-curl http://localhost:8080/actuator/health
-# {"status":"UP"}
+# 3. Frontend (in another terminal)
+cd frontend
+npm install
+npm run dev
 ```
+
+Open `http://localhost:5173`. Register a new account, then explore.
 
 ## Architecture
 
