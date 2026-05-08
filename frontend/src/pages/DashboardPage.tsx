@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.tsx
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { accountsApi, type AccountResponse } from "@/api/accounts";
 import { useAuth } from "@/auth/useAuth";
@@ -12,6 +12,8 @@ import { TransactionList } from "@/components/TransactionList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnvBanner } from "@/components/EnvBanner";
 import { StatementList } from "@/components/StatementList";
+import { ScheduledTransferDialog } from "@/components/ScheduledTransferDialog";
+import { ScheduledTransferList } from "@/components/ScheduledTransferList";
 
 interface DialogState {
   account: AccountResponse;
@@ -21,20 +23,17 @@ interface DialogState {
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [scheduleDialogAccount, setScheduleDialogAccount] = useState<AccountResponse | null>(null);
   const [historyAccountIdRaw, setHistoryAccountId] = useState<number | null>(null);
+
   const accountsQuery = useQuery({
     queryKey: ["accounts"],
     queryFn: () => accountsApi.listMine(),
   });
-   const historyAccountId =
-    historyAccountIdRaw ?? accountsQuery.data?.[0]?.id ?? null;
 
-  // Default the history dropdown to the first account once loaded.
-  useEffect(() => {
-    if (historyAccountId === null && accountsQuery.data && accountsQuery.data.length > 0) {
-      setHistoryAccountId(accountsQuery.data[0].id);
-    }
-  }, [accountsQuery.data, historyAccountId]);
+  // Derive the active history account: user's choice, else first loaded.
+  const historyAccountId =
+    historyAccountIdRaw ?? accountsQuery.data?.[0]?.id ?? null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -80,6 +79,7 @@ export function DashboardPage() {
                   account={acc}
                   onDeposit={() => setDialog({ account: acc, kind: "deposit" })}
                   onWithdraw={() => setDialog({ account: acc, kind: "withdraw" })}
+                  onSchedule={() => setScheduleDialogAccount(acc)}
                 />
               ))}
             </div>
@@ -123,6 +123,7 @@ export function DashboardPage() {
             </Card>
           </section>
         )}
+
         {/* Statements */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
           <section>
@@ -138,10 +139,25 @@ export function DashboardPage() {
               </CardContent>
             </Card>
           </section>
-       )}
-      </main>
+        )}
 
-      
+        {/* Scheduled transfers */}
+        {accountsQuery.data && accountsQuery.data.length > 0 && (
+          <section>
+            <h2 className="text-lg font-medium mb-4">Scheduled transfers</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Recurring & one-off scheduled transfers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScheduledTransferList />
+              </CardContent>
+            </Card>
+          </section>
+        )}
+      </main>
 
       {dialog && (
         <MoneyActionDialog
@@ -151,6 +167,15 @@ export function DashboardPage() {
           onOpenChange={(open) => { if (!open) setDialog(null); }}
         />
       )}
+
+      {scheduleDialogAccount && (
+        <ScheduledTransferDialog
+          account={scheduleDialogAccount}
+          open={true}
+          onOpenChange={(open) => { if (!open) setScheduleDialogAccount(null); }}
+        />
+      )}
+
       <EnvBanner />
     </div>
   );

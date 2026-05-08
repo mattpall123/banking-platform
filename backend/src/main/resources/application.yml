@@ -78,3 +78,12 @@ bank:
     statements:
       enabled: false                        # disabled by default in dev
       cron: "0 0 2 1 * *"                  # 02:00 on the 1st, monthly
+  admin:
+    boot-promote-email: frontend-test@example.com
+  scheduled-transfers:
+      runner:
+        enabled: true                       # ON in dev; demo-friendly. Comment to disable.
+        fixed-rate-ms: 300000              # 5 minutes
+        initial-delay-ms: 30000            # wait 30s after boot before first run
+
+

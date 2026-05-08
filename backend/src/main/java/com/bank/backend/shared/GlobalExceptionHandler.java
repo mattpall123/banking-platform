@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
  * Global exception handling. Returns RFC 7807-ish JSON for every error.
  *
@@ -141,6 +142,23 @@ public class GlobalExceptionHandler {
                 "status", 423,
                 "error", "Locked",
                 "message", ex.getMessage(),
+                "path", req.getRequestURI()
+        ));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex,
+            HttpServletRequest req) {
+        // Malformed JSON, unknown enum values, type mismatches.
+        // Don't echo the parser error to the client — could leak class names
+        // or internal field structure. Generic 400 with a stable message.
+        log.debug("Bad request body: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 400,
+                "error", "Bad Request",
+                "message", "Bad request body",
                 "path", req.getRequestURI()
         ));
     }

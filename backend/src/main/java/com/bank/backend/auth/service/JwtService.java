@@ -1,5 +1,6 @@
 package com.bank.backend.auth.service;
 
+import com.bank.backend.auth.repository.UserRoleRepository;
 import com.bank.backend.user.domain.UserAccount;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -28,27 +29,32 @@ public class JwtService {
 
     private final JwtProperties props;
     private final SecretKey signingKey;
+    private final UserRoleRepository userRoleRepo;
 
-    public JwtService(JwtProperties props) {
+    public JwtService(JwtProperties props, UserRoleRepository userRoleRepo) {
         this.props = props;
+        this.userRoleRepo = userRoleRepo;
         // HS256 requires at least 256 bits (32 bytes) of key material.
         // Keys.hmacShaKeyFor enforces this and throws if the secret is too short.
         this.signingKey = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Issue an access token for the given user. Embeds id, email, and roles
-     * (today everyone is CUSTOMER; Session 9 adds real role assignment).
+     * Issue an access token for the given user. Roles are loaded fresh
+     * from the DB at mint time, so a role grant/revoke takes effect on
+     * the next token (refresh or new login).
      */
     public String issueAccessToken(UserAccount user) {
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(props.accessTokenTtlSeconds());
 
+        List<String> roles = userRoleRepo.findRoleCodesByUserId(user.getId());
+
         return Jwts.builder()
                 .issuer(props.issuer())
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
-                .claim("roles", List.of("CUSTOMER"))
+                .claim("roles", roles)
                 .id(UUID.randomUUID().toString())          // jti
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))

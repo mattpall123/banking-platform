@@ -11,13 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import com.bank.backend.statement.service.DemoDataSeeder;
 import java.time.YearMonth;
 import java.util.List;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 /**
  * Admin endpoints for the statement-generation batch job.
  *
  * AUTHZ NOTE: should be admin-only. Until Session 9 introduces RBAC, every
  * authenticated user can trigger runs. Acceptable for development.
  */
+@PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/api/admin/statements")
 public class StatementAdminController {

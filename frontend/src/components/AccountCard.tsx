@@ -9,9 +9,10 @@ interface Props {
   account: AccountResponse;
   onDeposit?: () => void;
   onWithdraw?: () => void;
+  onSchedule?: () => void;
 }
 
-export function AccountCard({ account, onDeposit, onWithdraw }: Props) {
+export function AccountCard({ account, onDeposit, onWithdraw, onSchedule }: Props) {
   return (
     <Card>
       <CardHeader>
@@ -35,9 +36,10 @@ export function AccountCard({ account, onDeposit, onWithdraw }: Props) {
         <p className="text-3xl font-semibold tracking-tight">
           {formatMoney(account.balance, account.currency)}
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={onDeposit}>Deposit</Button>
           <Button size="sm" variant="outline" onClick={onWithdraw}>Withdraw</Button>
+          <Button size="sm" variant="outline" onClick={onSchedule}>Schedule</Button>
         </div>
       </CardContent>
     </Card>

@@ -1,12 +1,18 @@
 package com.bank.backend.auth.service;
 
+import com.bank.backend.auth.domain.Role;
+import com.bank.backend.auth.domain.RoleCode;
+import com.bank.backend.auth.domain.UserRole;
 import com.bank.backend.auth.dto.AuthResponse;
 import com.bank.backend.auth.dto.LoginRequest;
 import com.bank.backend.auth.dto.RegisterRequest;
+import com.bank.backend.auth.repository.RoleRepository;
+import com.bank.backend.auth.repository.UserRoleRepository;
 import com.bank.backend.customer.domain.Customer;
 import com.bank.backend.customer.domain.KycStatus;
 import com.bank.backend.customer.domain.RiskRating;
 import com.bank.backend.customer.repository.CustomerRepository;
+import com.bank.backend.shared.MetricsService;
 import com.bank.backend.user.domain.UserAccount;
 import com.bank.backend.user.repository.UserAccountRepository;
 import org.slf4j.Logger;
@@ -22,10 +28,9 @@ import java.time.Instant;
 /**
  * Orchestrates registration, login, refresh, and logout.
  *
- * Registration is a single transaction creating both the User (auth) and
- * the Customer (KYC pending) — atomicity matters here: if the Customer
- * insert fails, the User row must roll back too, otherwise we get orphan
- * users with no customer record.
+ * Registration is a single transaction creating the User (auth), the
+ * Customer (KYC pending), and the user's default CUSTOMER role grant.
+ * Atomicity matters: a failure in any step rolls back the whole thing.
  */
 @Service
 public class AuthService {
@@ -39,19 +44,28 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final UserRoleRepository userRoleRepo;
+    private final RoleRepository roleRepo;
+    private final MetricsService metrics;
 
     public AuthService(
             UserAccountRepository userRepo,
             CustomerRepository customerRepo,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RefreshTokenService refreshTokenService
+            RefreshTokenService refreshTokenService,
+            MetricsService metrics,
+            UserRoleRepository userRoleRepo,
+            RoleRepository roleRepo
     ) {
         this.userRepo = userRepo;
         this.customerRepo = customerRepo;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.metrics = metrics;
+        this.userRoleRepo = userRoleRepo;
+        this.roleRepo = roleRepo;
     }
 
     @Transactional
@@ -59,9 +73,8 @@ public class AuthService {
         String email = req.email().toLowerCase().trim();
 
         if (userRepo.existsByEmail(email)) {
-            // Don't reveal whether the email exists. Return the same generic 400
-            // shape our validation handler returns. Security through indistinguishable
-            // responses defeats user enumeration.
+            // Don't reveal whether the email exists. Indistinguishable responses
+            // defeat user enumeration.
             throw new IllegalArgumentException("Registration failed");
         }
 
@@ -94,6 +107,15 @@ public class AuthService {
         customer.setRiskRating(RiskRating.LOW);
         customerRepo.save(customer);
 
+        // 3. Grant the default CUSTOMER role
+        Role customerRole = roleRepo.findByCode(RoleCode.CUSTOMER)
+                .orElseThrow(() -> new IllegalStateException("CUSTOMER role missing from DB"));
+        UserRole grant = new UserRole();
+        grant.setUserId(user.getId());
+        grant.setRoleId(customerRole.getId());
+        grant.setGrantedAt(Instant.now());
+        userRoleRepo.save(grant);
+
         log.info("Registered new user id={} email={}", user.getId(), email);
 
         return issueTokensFor(user, fromIp);
@@ -109,7 +131,6 @@ public class AuthService {
         UserAccount user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        // Check lockout
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(Instant.now())) {
             throw new LockedException("Account is temporarily locked");
         }
@@ -118,7 +139,6 @@ public class AuthService {
             throw new LockedException("Account is disabled");
         }
 
-        // Verify password
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             int newCount = user.getFailedLoginCount() + 1;
             user.setFailedLoginCount(newCount);
@@ -132,13 +152,13 @@ public class AuthService {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        // Success — reset counters
         user.setFailedLoginCount(0);
         user.setLockedUntil(null);
         user.setLastLoginAt(Instant.now());
         userRepo.save(user);
 
         log.info("User logged in: userId={}", user.getId());
+        metrics.failedLogin();
         return issueTokensFor(user, fromIp);
     }
 
@@ -157,7 +177,6 @@ public class AuthService {
                     jwtService.getAccessTokenTtlSeconds()
             );
         } catch (RefreshTokenReusedException e) {
-            // Strong theft signal — kill all tokens for this user
             log.warn("Refresh token reuse detected for userId={} — revoking all tokens", e.getUserId());
             refreshTokenService.revokeAllForUser(e.getUserId());
             throw new BadCredentialsException("Refresh token invalid; please log in again");
