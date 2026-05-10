@@ -162,4 +162,20 @@ public class GlobalExceptionHandler {
                 "path", req.getRequestURI()
         ));
     }
+
+    @ExceptionHandler(com.bank.backend.etransfer.service.SecurityAnswerWrongException.class)
+    public ResponseEntity<Map<String, Object>> handleWrongAnswer(
+            com.bank.backend.etransfer.service.SecurityAnswerWrongException ex,
+            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 422,
+                "error", "Wrong Answer",
+                "message", ex.getMessage(),
+                "attemptsRemaining", ex.getAttemptsRemaining(),
+                "path", req.getRequestURI()
+        ));
+    }
+    
 }
+

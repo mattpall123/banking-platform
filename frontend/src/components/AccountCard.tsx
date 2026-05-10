@@ -10,9 +10,10 @@ interface Props {
   onDeposit?: () => void;
   onWithdraw?: () => void;
   onSchedule?: () => void;
+  onSendETransfer?: () => void;
 }
 
-export function AccountCard({ account, onDeposit, onWithdraw, onSchedule }: Props) {
+export function AccountCard({ account, onDeposit, onWithdraw, onSchedule, onSendETransfer }: Props) {
   return (
     <Card>
       <CardHeader>
@@ -40,6 +41,7 @@ export function AccountCard({ account, onDeposit, onWithdraw, onSchedule }: Prop
           <Button size="sm" variant="outline" onClick={onDeposit}>Deposit</Button>
           <Button size="sm" variant="outline" onClick={onWithdraw}>Withdraw</Button>
           <Button size="sm" variant="outline" onClick={onSchedule}>Schedule</Button>
+          <Button size="sm" variant="outline" onClick={onSendETransfer}>e-Transfer</Button>
         </div>
       </CardContent>
     </Card>

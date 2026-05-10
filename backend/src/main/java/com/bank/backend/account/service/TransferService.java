@@ -20,6 +20,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import com.bank.backend.shared.MetricsService;
+import io.micrometer.core.instrument.Timer;
 
 import java.util.List;
 
@@ -55,18 +57,22 @@ public class TransferService {
     private final LedgerAccountRepository ledgerAccountRepo;
     private final LedgerService ledger;
 
+    private final MetricsService metrics;
+
     public TransferService(
             AccountRepository accountRepo,
             AccountHolderRepository accountHolderRepo,
             CustomerRepository customerRepo,
             LedgerAccountRepository ledgerAccountRepo,
-            LedgerService ledger
+            LedgerService ledger,
+            MetricsService metrics
     ) {
         this.accountRepo = accountRepo;
         this.accountHolderRepo = accountHolderRepo;
         this.customerRepo = customerRepo;
         this.ledgerAccountRepo = ledgerAccountRepo;
         this.ledger = ledger;
+        this.metrics = metrics;
     }
 
     /**
@@ -87,6 +93,7 @@ public class TransferService {
             Long userId,
             String idempotencyKey
     ) {
+        Timer.Sample timerSample = metrics.startTransferTimer();
         // Resolve the destination's id from its account number BEFORE locking.
         // We need both ids to compute deterministic lock order.
         Account destPreview = accountRepo.findByAccountNumber(destAccountNumber)
@@ -157,6 +164,8 @@ public class TransferService {
         log.info("Transfer ok: src={} dst={} amount={} jeId={}",
                 source.getAccountNumber(), dest.getAccountNumber(), amount, je.getId());
 
+        metrics.transfer(amount.amount());
+        metrics.stopTransferTimer(timerSample);
         return je;
     }
 

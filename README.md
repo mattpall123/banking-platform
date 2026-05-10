@@ -24,7 +24,7 @@ A simulated banking management system built to demonstrate the engineering patte
 - [x] Session 7 — Audit log + observability (hash-chained audit, /actuator/prometheus, structured JSON logs, ADR-001)
 - [x] Session 8 — Spring Batch + statements (monthly batch job, OpenPDF, hash-resilient retry, customer download, scheduled cron behind feature flag, synthetic data seeder)
 - [x] Session 9 — RBAC + scheduled transfers (CUSTOMER/TELLER/ADMIN, @PreAuthorize, scheduled transfer runner with frequency math + idempotency, fixes Spring @Transactional self-invocation)
-- [ ] Session 10 — Interac e-Transfer simulation
+- [x] Session 10 — Interac e-Transfer simulation (hold-and-release ledger, auto-deposit, security Q&A with 3-strikes lockout, cancel + scheduled expiry runner, full sender→recipient cross-browser demo)
 - [ ] Session 11 — CI/CD, deploy live
 - [ ] Session 12 — Polish, architecture diagrams, demo seed data
 

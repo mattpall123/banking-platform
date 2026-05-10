@@ -12,7 +12,7 @@ import com.bank.backend.ledger.service.PostingRequest;
 import com.bank.backend.shared.Money;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.bank.backend.shared.MetricsService;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -64,14 +64,18 @@ public class AccountService {
     private final LedgerAccountRepository ledgerAccountRepo;
     private final LedgerService ledger;
 
+    private final MetricsService metrics;
+
     public AccountService(
             AccountRepository accountRepo,
             LedgerAccountRepository ledgerAccountRepo,
-            LedgerService ledger
+            LedgerService ledger,
+            MetricsService metrics
     ) {
         this.accountRepo = accountRepo;
         this.ledgerAccountRepo = ledgerAccountRepo;
         this.ledger = ledger;
+        this.metrics = metrics;
     }
 
     /**
@@ -107,7 +111,7 @@ public class AccountService {
             PostingRequest.of(cashAccountId,    amount),
             PostingRequest.of(depositAccountId, amount.negate())
         );
-
+        metrics.deposit();
         return ledger.post(
             "Deposit to " + account.getAccountNumber(),
             JournalEntryType.DEPOSIT,
@@ -138,7 +142,7 @@ public class AccountService {
             PostingRequest.of(cashAccountId,    amount.negate()),
             PostingRequest.of(depositAccountId, amount)
         );
-
+        metrics.withdrawal();
         return ledger.post(
             "Withdrawal from " + account.getAccountNumber(),
             JournalEntryType.WITHDRAWAL,

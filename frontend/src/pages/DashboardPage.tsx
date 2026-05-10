@@ -14,6 +14,8 @@ import { EnvBanner } from "@/components/EnvBanner";
 import { StatementList } from "@/components/StatementList";
 import { ScheduledTransferDialog } from "@/components/ScheduledTransferDialog";
 import { ScheduledTransferList } from "@/components/ScheduledTransferList";
+import { SendETransferDialog } from "@/components/SendTransferDialog";
+import { ETransferList } from "@/components/ETransferList";
 
 interface DialogState {
   account: AccountResponse;
@@ -25,7 +27,7 @@ export function DashboardPage() {
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [scheduleDialogAccount, setScheduleDialogAccount] = useState<AccountResponse | null>(null);
   const [historyAccountIdRaw, setHistoryAccountId] = useState<number | null>(null);
-
+  const [sendETransferAccount, setSendETransferAccount] = useState<AccountResponse | null>(null);
   const accountsQuery = useQuery({
     queryKey: ["accounts"],
     queryFn: () => accountsApi.listMine(),
@@ -75,11 +77,12 @@ export function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {accountsQuery.data.map((acc) => (
                 <AccountCard
-                  key={acc.id}
-                  account={acc}
-                  onDeposit={() => setDialog({ account: acc, kind: "deposit" })}
-                  onWithdraw={() => setDialog({ account: acc, kind: "withdraw" })}
-                  onSchedule={() => setScheduleDialogAccount(acc)}
+                key={acc.id}
+                account={acc}
+                onDeposit={() => setDialog({ account: acc, kind: "deposit" })}
+                onWithdraw={() => setDialog({ account: acc, kind: "withdraw" })}
+                onSchedule={() => setScheduleDialogAccount(acc)}
+                onSendETransfer={() => setSendETransferAccount(acc)}
                 />
               ))}
             </div>
@@ -141,6 +144,23 @@ export function DashboardPage() {
           </section>
         )}
 
+        {/* e-Transfers */}
+        {accountsQuery.data && accountsQuery.data.length > 0 && (
+        <section>
+            <h2 className="text-lg font-medium mb-4">Interac e-Transfers</h2>
+            <Card>
+            <CardHeader>
+                <CardTitle className="text-base font-medium">
+                Send and receive money by email
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ETransferList accounts={accountsQuery.data} />
+            </CardContent>
+            </Card>
+        </section>
+        )}
+
         {/* Scheduled transfers */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
           <section>
@@ -175,6 +195,14 @@ export function DashboardPage() {
           onOpenChange={(open) => { if (!open) setScheduleDialogAccount(null); }}
         />
       )}
+
+      {sendETransferAccount && (
+        <SendETransferDialog
+            account={sendETransferAccount}
+            open={true}
+            onOpenChange={(open) => { if (!open) setSendETransferAccount(null); }}
+        />
+        )}
 
       <EnvBanner />
     </div>

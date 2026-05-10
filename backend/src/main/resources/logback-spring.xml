@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Two appenders:
+    CONSOLE → human-readable plain text (so dev console output stays readable)
+    JSON_FILE → newline-delimited JSON (NDJSON), one log event per line,
+                machine-parseable for log aggregators (ELK, Loki, Datadog).
+
+  In a real deployment you'd ship JSON to stdout instead of a file (12-factor
+  app principle); we use a file here so dev workflow keeps the console clean.
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level [%logger{20}] %msg %mdc%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/app.json</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+      <maxFileSize>10MB</maxFileSize>
+      <maxHistory>14</maxHistory>
+      <totalSizeCap>200MB</totalSizeCap>
+    </rollingPolicy>
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <timestamp>
+          <fieldName>ts</fieldName>
+          <timeZone>UTC</timeZone>
+        </timestamp>
+        <pattern>
+          <pattern>
+            {
+              "level": "%level",
+              "thread": "%thread",
+              "logger": "%logger",
+              "message": "%message",
+              "app": "banking-platform"
+            }
+          </pattern>
+        </pattern>
+        <mdc/>
+        <stackTrace>
+          <fieldName>stack</fieldName>
+          <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+            <maxDepthPerThrowable>30</maxDepthPerThrowable>
+            <rootCauseFirst>true</rootCauseFirst>
+          </throwableConverter>
+        </stackTrace>
+      </providers>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="JSON_FILE"/>
+  </root>
+
+  <!-- Quiet down noisy framework loggers -->
+  <logger name="org.hibernate" level="WARN"/>
+  <logger name="org.springframework.security" level="WARN"/>
+  <logger name="org.springframework.web.servlet" level="WARN"/>
+</configuration>

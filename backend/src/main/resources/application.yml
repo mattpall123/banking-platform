@@ -85,5 +85,10 @@ bank:
         enabled: true                       # ON in dev; demo-friendly. Comment to disable.
         fixed-rate-ms: 300000              # 5 minutes
         initial-delay-ms: 30000            # wait 30s after boot before first run
-
+  etransfer:
+      expiry-hours: 1                 # demo-friendly: real Interac is 30 days (720 hours)
+      expiry-runner:
+        enabled: true                 # ON in dev so the demo works
+        fixed-rate-ms: 60000          # check every minute (so demos see expiry quickly)
+        initial-delay-ms: 30000
 

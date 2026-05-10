@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.bank.backend.audit.service.Audited;
+import static com.bank.backend.audit.domain.AuditAction.*;
 
 @RestController
 @RequestMapping("/api/transfers")
@@ -23,6 +25,7 @@ public class TransferController {
     }
 
     @PostMapping
+    @Audited(action = TRANSFER_EXECUTE, resourceType = "Transfer")
     public ResponseEntity<JournalEntryResponse> transfer(
             @Valid @RequestBody TransferRequest body,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,

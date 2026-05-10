@@ -5,7 +5,7 @@ import { api } from "./client";
 export interface TransactionResponse {
   journalEntryId: number;
   description: string;
-  entryType: "DEPOSIT" | "WITHDRAWAL" | "TRANSFER" | "INTEREST" | "FEE" | "REVERSAL" | "ADJUSTMENT" | "OPENING";
+  entryType: "DEPOSIT" | "WITHDRAWAL" | "TRANSFER" | "ETRANSFER" | "INTEREST" | "FEE" | "REVERSAL" | "ADJUSTMENT" | "OPENING";
   signedAmount: number;
   currency: string;
   occurredAt: string;
