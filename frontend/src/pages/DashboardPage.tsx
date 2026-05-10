@@ -14,7 +14,7 @@ import { EnvBanner } from "@/components/EnvBanner";
 import { StatementList } from "@/components/StatementList";
 import { ScheduledTransferDialog } from "@/components/ScheduledTransferDialog";
 import { ScheduledTransferList } from "@/components/ScheduledTransferList";
-import { SendETransferDialog } from "@/components/SendTransferDialog";
+import { SendETransferDialog } from "@/components/SendETransferDialog";
 import { ETransferList } from "@/components/ETransferList";
 
 interface DialogState {
