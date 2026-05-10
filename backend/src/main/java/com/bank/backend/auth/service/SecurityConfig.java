@@ -1,8 +1,8 @@
 package com.bank.backend.auth.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,7 +12,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,11 +21,12 @@ import java.util.List;
  *
  * Key choices:
  *   - Stateless sessions: every request is independently authenticated via JWT.
- *     We don't use HttpSession at all — that's how you scale horizontally.
+ *     No HttpSession at all — that's how you scale horizontally.
  *   - CSRF disabled: CSRF protects cookie-based auth. We use Bearer headers
  *     which aren't auto-attached by browsers, so CSRF doesn't apply.
- *   - CORS for the React dev server (Vite default port 5173).
- *   - Method-level @PreAuthorize is enabled (used in Session 9 for RBAC).
+ *   - CORS allowed origins are env-driven via bank.cors.allowed-origins
+ *     (comma-separated). Defaults to localhost:5173 for dev.
+ *   - Method-level @PreAuthorize is enabled (used for RBAC in Session 9+).
  */
 @Configuration
 @EnableWebSecurity
@@ -34,15 +36,18 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final JsonAuthenticationEntryPoint authEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
+    private final String allowedOriginsRaw;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtFilter,
             JsonAuthenticationEntryPoint authEntryPoint,
-            JsonAccessDeniedHandler accessDeniedHandler
+            JsonAccessDeniedHandler accessDeniedHandler,
+            @Value("${bank.cors.allowed-origins:http://localhost:5173}") String allowedOriginsRaw
     ) {
         this.jwtFilter = jwtFilter;
         this.authEntryPoint = authEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
+        this.allowedOriginsRaw = allowedOriginsRaw;
     }
 
     @Bean
@@ -61,14 +66,20 @@ public class SecurityConfig {
                 .authenticationEntryPoint(authEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        // Parse comma-separated origins from env: e.g.
+        //   "http://localhost:5173,https://my-bank.vercel.app"
+        List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost:5173"));  // Vite dev server
+        cfg.setAllowedOrigins(origins);
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         cfg.setExposedHeaders(List.of("Content-Disposition", "X-Filename"));

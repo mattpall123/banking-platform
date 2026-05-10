@@ -25,7 +25,10 @@ A simulated banking management system built to demonstrate the engineering patte
 - [x] Session 8 — Spring Batch + statements (monthly batch job, OpenPDF, hash-resilient retry, customer download, scheduled cron behind feature flag, synthetic data seeder)
 - [x] Session 9 — RBAC + scheduled transfers (CUSTOMER/TELLER/ADMIN, @PreAuthorize, scheduled transfer runner with frequency math + idempotency, fixes Spring @Transactional self-invocation)
 - [x] Session 10 — Interac e-Transfer simulation (hold-and-release ledger, auto-deposit, security Q&A with 3-strikes lockout, cancel + scheduled expiry runner, full sender→recipient cross-browser demo)
-- [ ] Session 11 — CI/CD, deploy live
+- [x] Session 11 — CI/CD + deploy
+  - Backend: Dockerized, deployed to Fly.io (yyz region)
+  - Frontend: deployed to Vercel
+  - Postgres: managed on Fly.io
 - [ ] Session 12 — Polish, architecture diagrams, demo seed data
 
 ## Screenshots
@@ -68,6 +71,15 @@ npm run dev
 ```
 
 Open `http://localhost:5173`. Register a new account, then explore.
+
+## 🚀 Live Demo
+
+- **App**: https://mp-banking-frontend.vercel.app
+- **API**: https://mp-banking-final.fly.dev
+- **Demo credentials**: `demo@example.com` / `DemoUser123!`
+
+> First request after idle takes ~60s (Fly auto-stops machines to save cost).
+> Subsequent requests are instant.
 
 ## Architecture
 

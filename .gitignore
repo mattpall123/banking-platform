@@ -43,3 +43,13 @@ backend/logs/
 
 # Generated statement PDFs
 backend/statements/
+
+# Local secrets — never commit
+.env
+.env.local
+.env.production
+.env.prod
+**/.env
+**/.env.local
+**/.env.production
+**/.env.prod

@@ -1,0 +1,100 @@
+# ============================================================================
+# Production profile.
+#
+# Activated by SPRING_PROFILES_ACTIVE=prod (set in fly.toml).
+#
+# Everything sensitive (DB password, JWT secret) comes from env vars.
+# Defaults exist for non-sensitive things so the app boots even if some
+# tuning vars aren't set.
+# ============================================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:bankdb}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: non_null
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
+
+server:
+  port: 8080
+  tomcat:
+    max-threads: 100
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 1024
+  forward-headers-strategy: native      # Fly terminates TLS upstream
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never               # don't leak DB hostname etc.
+
+logging:
+  level:
+    root: INFO
+    com.bank.backend: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%logger{36}] %msg%n"
+
+bank:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  admin:
+    boot-promote-email: ${ADMIN_BOOT_PROMOTE_EMAIL:}
+  scheduled-transfers:
+    runner:
+      enabled: ${SCHEDULED_TRANSFERS_RUNNER_ENABLED:true}
+      fixed-rate-ms: 300000             # 5 minutes
+      initial-delay-ms: 60000
+  etransfer:
+    expiry-hours: ${ETRANSFER_EXPIRY_HOURS:720}    # real Interac default: 30 days
+    expiry-runner:
+      enabled: ${ETRANSFER_EXPIRY_RUNNER_ENABLED:true}
+      fixed-rate-ms: 600000             # 10 minutes
+      initial-delay-ms: 60000
+  statements:
+    dir: ${STATEMENTS_DIR:/app/statements}
+  batch:
+    statements:
+      enabled: ${BATCH_STATEMENTS_ENABLED:false}
+  demo:
+    bootstrap:
+      enabled: ${DEMO_BOOTSTRAP_ENABLED:false}
+      email: ${DEMO_BOOTSTRAP_EMAIL:demo@example.com}
+      password: ${DEMO_BOOTSTRAP_PASSWORD:}
+      first-name: ${DEMO_BOOTSTRAP_FIRST_NAME:Demo}
+      last-name: ${DEMO_BOOTSTRAP_LAST_NAME:User}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-ttl-seconds: 900
+  refresh-token-ttl-seconds: 604800
+  issuer: banking-platform
