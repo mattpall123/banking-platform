@@ -1,6 +1,6 @@
 # Banking Platform
 
-A simulated banking management system built to demonstrate the engineering patterns used by core banking systems — double-entry ledger, idempotent transfers, immutable audit log, and concurrency-safe money movement.
+A simulated banking management system built with claude to demonstrate the engineering patterns used by core banking systems — double-entry ledger, idempotent transfers, immutable audit log, and concurrency-safe money movement.
 
 > **Note:** This is a learning/portfolio project. No real money, no real PCI compliance. The point is to model how a real bank's backend works.
 
