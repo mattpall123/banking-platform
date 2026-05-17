@@ -1,5 +1,12 @@
 package com.bank.backend.auth.service;
 
+import com.bank.backend.account.domain.Account;
+import com.bank.backend.account.domain.AccountHolder;
+import com.bank.backend.account.domain.AccountStatus;
+import com.bank.backend.account.domain.AccountType;
+import com.bank.backend.account.domain.HolderRole;
+import com.bank.backend.account.repository.AccountHolderRepository;
+import com.bank.backend.account.repository.AccountRepository;
 import com.bank.backend.auth.domain.Role;
 import com.bank.backend.auth.domain.RoleCode;
 import com.bank.backend.auth.domain.UserRole;
@@ -12,7 +19,14 @@ import com.bank.backend.customer.domain.Customer;
 import com.bank.backend.customer.domain.KycStatus;
 import com.bank.backend.customer.domain.RiskRating;
 import com.bank.backend.customer.repository.CustomerRepository;
+import com.bank.backend.ledger.domain.JournalEntryType;
+import com.bank.backend.ledger.domain.LedgerAccount;
+import com.bank.backend.ledger.domain.LedgerAccountType;
+import com.bank.backend.ledger.repository.LedgerAccountRepository;
+import com.bank.backend.ledger.service.LedgerService;
+import com.bank.backend.ledger.service.PostingRequest;
 import com.bank.backend.shared.MetricsService;
+import com.bank.backend.shared.Money;
 import com.bank.backend.user.domain.UserAccount;
 import com.bank.backend.user.repository.UserAccountRepository;
 import org.slf4j.Logger;
@@ -24,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Orchestrates registration, login, refresh, and logout.
@@ -47,6 +62,10 @@ public class AuthService {
     private final UserRoleRepository userRoleRepo;
     private final RoleRepository roleRepo;
     private final MetricsService metrics;
+    private final AccountRepository accountRepo;
+    private final AccountHolderRepository holderRepo;
+    private final LedgerAccountRepository ledgerAccountRepo;
+    private final LedgerService ledger;
 
     public AuthService(
             UserAccountRepository userRepo,
@@ -56,7 +75,11 @@ public class AuthService {
             RefreshTokenService refreshTokenService,
             MetricsService metrics,
             UserRoleRepository userRoleRepo,
-            RoleRepository roleRepo
+            RoleRepository roleRepo,
+            AccountRepository accountRepo,
+            AccountHolderRepository holderRepo,
+            LedgerAccountRepository ledgerAccountRepo,
+            LedgerService ledger
     ) {
         this.userRepo = userRepo;
         this.customerRepo = customerRepo;
@@ -66,6 +89,10 @@ public class AuthService {
         this.metrics = metrics;
         this.userRoleRepo = userRoleRepo;
         this.roleRepo = roleRepo;
+        this.accountRepo = accountRepo;
+        this.holderRepo = holderRepo;
+        this.ledgerAccountRepo = ledgerAccountRepo;
+        this.ledger = ledger;
     }
 
     @Transactional
@@ -115,6 +142,10 @@ public class AuthService {
         grant.setRoleId(customerRole.getId());
         grant.setGrantedAt(Instant.now());
         userRoleRepo.save(grant);
+
+        // 4. Auto-create starter accounts with a small demo balance
+        openStarterAccount(user, customer, AccountType.CHEQUING, Money.of("1500.00", "CAD"));
+        openStarterAccount(user, customer, AccountType.SAVINGS,  Money.of("500.00",  "CAD"));
 
         log.info("Registered new user id={} email={}", user.getId(), email);
 
@@ -190,6 +221,53 @@ public class AuthService {
     }
 
     // ---- helpers ----
+
+    private void openStarterAccount(UserAccount user, Customer customer, AccountType type, Money opening) {
+        // 1. Banking account row
+        Account acct = new Account();
+        acct.setAccountNumber(generateAccountNumber());
+        acct.setAccountType(type);
+        acct.setCurrency("CAD");
+        acct.setStatus(AccountStatus.ACTIVE);
+        acct.setOpenedAt(Instant.now());
+        acct = accountRepo.save(acct);
+
+        // 2. Link customer as primary owner
+        AccountHolder holder = new AccountHolder();
+        holder.setAccount(acct);
+        holder.setCustomer(customer);
+        holder.setRole(HolderRole.PRIMARY_OWNER);
+        holderRepo.save(holder);
+
+        // 3. Ledger sub-account (LIABILITY) for balance tracking
+        LedgerAccount sub = new LedgerAccount();
+        sub.setCode("DEPOSITS:" + acct.getAccountNumber());
+        sub.setName(customer.getLegalFirstName() + " " + type.name().charAt(0) + type.name().substring(1).toLowerCase());
+        sub.setAccountType(LedgerAccountType.LIABILITY);
+        sub.setCurrency("CAD");
+        sub.setBankingAccountId(acct.getId());
+        ledgerAccountRepo.save(sub);
+
+        // 4. Seed opening balance via journal entry (debit EQUITY:OPENING, credit deposits)
+        LedgerAccount equity = ledgerAccountRepo.findByCode("EQUITY:OPENING")
+                .orElseThrow(() -> new IllegalStateException("EQUITY:OPENING ledger account missing"));
+        ledger.post(
+                "Opening balance",
+                JournalEntryType.OPENING,
+                "register-open-" + acct.getAccountNumber(),
+                user.getId(),
+                List.of(
+                        PostingRequest.of(sub.getId(),    opening.negate()),
+                        PostingRequest.of(equity.getId(), opening)
+                )
+        );
+
+        log.info("Opened {} account {} for userId={} with {}", type, acct.getAccountNumber(), user.getId(), opening);
+    }
+
+    private static String generateAccountNumber() {
+        return String.format("1%011d", System.currentTimeMillis() % 100_000_000_000L);
+    }
 
     private AuthResponse issueTokensFor(UserAccount user, String fromIp) {
         String accessToken = jwtService.issueAccessToken(user);

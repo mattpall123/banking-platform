@@ -1,8 +1,11 @@
 // src/pages/DashboardPage.tsx
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { accountsApi, type AccountResponse } from "@/api/accounts";
+import { transactionsApi } from "@/api/transactions";
+import { customersApi } from "@/api/customers";
 import { useAuth } from "@/auth/useAuth";
 import { Button } from "@/components/ui/button";
 import { AccountCard } from "@/components/AccountCard";
@@ -16,6 +19,9 @@ import { ScheduledTransferDialog } from "@/components/ScheduledTransferDialog";
 import { ScheduledTransferList } from "@/components/ScheduledTransferList";
 import { SendETransferDialog } from "@/components/SendETransferDialog";
 import { ETransferList } from "@/components/ETransferList";
+import { FinancialSummaryCards } from "@/components/charts/FinancialSummaryCards";
+import { SpendingOverviewChart } from "@/components/charts/SpendingOverviewChart";
+import { BalanceHistoryChart } from "@/components/charts/BalanceHistoryChart";
 
 interface DialogState {
   account: AccountResponse;
@@ -33,26 +39,102 @@ export function DashboardPage() {
     queryFn: () => accountsApi.listMine(),
   });
 
+  const customerQuery = useQuery({
+    queryKey: ["customer"],
+    queryFn: () => customersApi.me(),
+  });
+
+  const txQueries = useQueries({
+    queries: (accountsQuery.data ?? []).map((acc) => ({
+      queryKey: ["transactions", acc.id],
+      queryFn: () => transactionsApi.forAccount(acc.id),
+    })),
+  });
+  const allTransactions = txQueries.flatMap((q) => q.data ?? []);
+
   // Derive the active history account: user's choice, else first loaded.
   const historyAccountId =
     historyAccountIdRaw ?? accountsQuery.data?.[0]?.id ?? null;
+  const selectedAccount = accountsQuery.data?.find((a) => a.id === historyAccountId) ?? null;
+  const selectedAccountTransactions = txQueries.find(
+    (_, i) => accountsQuery.data?.[i]?.id === historyAccountId
+  )?.data ?? [];
+
+  const firstName = customerQuery.data?.legalFirstName ?? "";
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  })();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b">
+      <header className="border-b bg-card">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Banking Platform</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={logout}>Log out</Button>
+          <Link to="/home" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground text-sm font-bold">M</span>
+            </div>
+            <span className="text-base font-semibold tracking-tight">MapleBank</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:block">{user?.email}</span>
+            <Button variant="outline" size="sm" onClick={logout}>Sign out</Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        {/* Greeting */}
+        <section>
+          <h1 className="text-2xl font-bold">
+            {greeting}{firstName ? `, ${firstName}` : ""}.
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Here's a look at your finances today.
+          </p>
+        </section>
+
+        {/* Financial summary */}
+        {accountsQuery.data && accountsQuery.data.length > 0 && (
+          <section>
+            <FinancialSummaryCards accounts={accountsQuery.data} allTransactions={allTransactions} />
+          </section>
+        )}
+
+        {/* Charts */}
+        {accountsQuery.data && accountsQuery.data.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium">Insights</h2>
+              {accountsQuery.data.length > 1 && (
+                <select
+                  value={historyAccountId ?? ""}
+                  onChange={(e) => setHistoryAccountId(Number(e.target.value))}
+                  className="flex h-8 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {accountsQuery.data.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.accountType} •••• {a.accountNumber.slice(-4)}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SpendingOverviewChart transactions={allTransactions} />
+              <BalanceHistoryChart
+                transactions={selectedAccountTransactions}
+                currentBalance={selectedAccount?.balance ?? 0}
+              />
+            </div>
+          </section>
+        )}
+
         {/* Accounts */}
         <section>
-          <h2 className="text-lg font-medium mb-4">Your accounts</h2>
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">Your accounts</h2>
 
           {accountsQuery.isLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -92,7 +174,7 @@ export function DashboardPage() {
         {/* Transfer */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
           <section>
-            <h2 className="text-lg font-medium mb-4">Transfer</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">Transfer</h2>
             <TransferForm accounts={accountsQuery.data} />
           </section>
         )}
@@ -100,7 +182,7 @@ export function DashboardPage() {
         {/* Transaction history */}
         {accountsQuery.data && accountsQuery.data.length > 0 && historyAccountId !== null && (
           <section>
-            <h2 className="text-lg font-medium mb-4">Recent transactions</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">Recent transactions</h2>
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -130,7 +212,7 @@ export function DashboardPage() {
         {/* Statements */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
           <section>
-            <h2 className="text-lg font-medium mb-4">Statements</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">Statements</h2>
             <Card>
               <CardHeader>
                 <CardTitle className="text-base font-medium">
@@ -147,7 +229,7 @@ export function DashboardPage() {
         {/* e-Transfers */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
         <section>
-            <h2 className="text-lg font-medium mb-4">Interac e-Transfers</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">Interac e-Transfers</h2>
             <Card>
             <CardHeader>
                 <CardTitle className="text-base font-medium">
@@ -164,7 +246,7 @@ export function DashboardPage() {
         {/* Scheduled transfers */}
         {accountsQuery.data && accountsQuery.data.length > 0 && (
           <section>
-            <h2 className="text-lg font-medium mb-4">Scheduled transfers</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">Scheduled transfers</h2>
             <Card>
               <CardHeader>
                 <CardTitle className="text-base font-medium">
