@@ -1,7 +1,6 @@
 // src/components/AccountCard.tsx
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/format";
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, Send } from "lucide-react";
 import type { AccountResponse } from "@/api/accounts";
