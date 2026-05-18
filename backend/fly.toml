@@ -9,7 +9,7 @@ primary_region = 'yyz'
 [build]
 
 [env]
-  CORS_ALLOWED_ORIGINS = 'http://localhost:5173'
+  CORS_ALLOWED_ORIGINS = 'http://localhost:5173,https://banking-platform-weld.vercel.app,https://mp-banking-frontend.vercel.app'
   DB_HOST = "mp-bank-db-final.internal"
   DB_NAME = 'bankdb'
   DB_PORT = '5433'
